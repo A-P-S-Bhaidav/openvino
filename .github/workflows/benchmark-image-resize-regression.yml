@@ -1,0 +1,32 @@
+name: Benchmark image resize regression checks
+
+on:
+  push:
+    branches:
+      - verify/benchmark-image-resize-dimensions
+
+permissions:
+  contents: read
+
+jobs:
+  cpu-regression:
+    if: github.repository == 'A-P-S-Bhaidav/openvino'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+      - name: Install pinned runtime and test dependencies
+        run: python -m pip install openvino==2026.4.1 numpy==2.4.2 pytest==9.2.0 opencv-python-headless==5.0.0.93
+      - name: Reproduce the baseline and verify the fix
+        env:
+          BASE_SHA: 152520467d0379f3a62558ef7defc57435344340
+        run: python .github/scripts/benchmark_image_resize_fork_validation.py validate
